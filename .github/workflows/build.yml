@@ -1,0 +1,64 @@
+# This workflow will build a .NET project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
+
+name: Build
+
+on:
+  push:
+    branches: [ "Branch_2x" ]
+  pull_request:
+    branches: [ "Branch_2x" ]
+
+jobs:
+  build:
+    env:
+      GIT_REF: ${{ github.ref }}
+      GIT_SHA: ${{ github.sha }}
+      Configuration: Release
+      SolutionFile: src\NodaTime-All.sln
+
+    runs-on: ubuntu-18.04
+
+    steps:
+    - name: Check out our repo
+      uses: actions/checkout@v3
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 2.1.300
+        
+    - name: Build
+      run: |
+        cd src
+        dotnet build NodaTime-All.sln -c Release
+        dotnet test  NodaTime-All.sln -c Release
+        mkdir nuget
+        dotnet pack  NodaTime-All.sln -c Release -o ../nuget
+        
+    - name: Restore dependencies
+      run: dotnet restore $Env:SolutionFile
+    
+    - name: Build
+      run: dotnet build --no-restore  $Env:SolutionFile -c $Env:Configuration
+    
+    - name: Test
+      run: dotnet test --no-build --verbosity normal $Env:SolutionFile -c $Env:Configuration
+    
+    - name: Pack
+      run: dotnet pack $Env:SolutionFile --no-restore --no-build --configuration $Env:Configuration  -o ./nuget
+
+    - name: Sign packages
+      if: github.repository_owner == 'GeneXusLabs' && steps.buildVariables.outputs.SHOULD_DEPLOY == 'true'
+      env:
+        TIMESTAMPER_URL: ${{ secrets.CODE_SIGN_CERTIFICATE_TIMESTAMPER_URL }}
+        PFX_BASE64: ${{ secrets.CODE_SIGN_CERTIFICATE_BASE64 }}
+        PFX_PASS: ${{ secrets.CODE_SIGN_CERTIFICATE_PASSWORD }}
+      run: |
+        $codesign_pfx = "code_sign_cert.pfx"
+        $bytes = [Convert]::FromBase64String($Env:PFX_BASE64)
+        [IO.File]::WriteAllBytes($codesign_pfx, $bytes)
+
+        Get-ChildItem ".\nuget\*.nupkg" -Recurse | ForEach-Object {
+          dotnet nuget sign $_.FullName --certificate-path $codesign_pfx --certificate-password $Env:PFX_PASS --timestamper $Env:TIMESTAMPER_URL
+        }
