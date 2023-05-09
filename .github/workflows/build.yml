@@ -15,13 +15,15 @@ jobs:
       GIT_REF: ${{ github.ref }}
       GIT_SHA: ${{ github.sha }}
       Configuration: Release
-      SolutionFile: src\NodaTime-All.sln
+      SolutionFile: .\src\NodaTime-All.sln
 
     runs-on: ubuntu-latest
 
     steps:
     - name: Check out our repo
       uses: actions/checkout@v3
+      with:
+        ref: 2.4.x
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
