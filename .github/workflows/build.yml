@@ -15,7 +15,7 @@ jobs:
       GIT_REF: ${{ github.ref }}
       GIT_SHA: ${{ github.sha }}
       Configuration: Release
-      SolutionFile: .\src\NodaTime-All.sln
+      SolutionFile: .\src\NodaTime-Web.sln
 
     runs-on: windows-latest
 
