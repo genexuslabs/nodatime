@@ -17,7 +17,7 @@ jobs:
       Configuration: Release
       SolutionFile: .\src\NodaTime-All.sln
 
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
     - name: Check out our repo
@@ -32,16 +32,16 @@ jobs:
         
         
     - name: Restore dependencies
-      run: dotnet restore $SolutionFile
+      run: dotnet restore $Env:SolutionFile
     
     - name: Build
-      run: dotnet build --no-restore  $SolutionFile -c $Configuration
+      run: dotnet build --no-restore  $Env:SolutionFile -c $Env:Configuration
     
     - name: Test
-      run: dotnet test --no-build --verbosity normal $SolutionFile -c $Configuration
+      run: dotnet test --no-build --verbosity normal $Env:SolutionFile -c $Env:Configuration
     
     - name: Pack
-      run: dotnet pack $SolutionFile --no-restore --no-build --configuration $Configuration  -o ./nuget
+      run: dotnet pack $Env:SolutionFile --no-restore --no-build --configuration $Env:Configuration  -o ./nuget
 
     - name: Sign packages
       if: github.repository_owner == 'GeneXusLabs' && steps.buildVariables.outputs.SHOULD_DEPLOY == 'true'
@@ -51,17 +51,17 @@ jobs:
         PFX_PASS: ${{ secrets.CODE_SIGN_CERTIFICATE_PASSWORD }}
       run: |
         $codesign_pfx = "code_sign_cert.pfx"
-        $bytes = [Convert]::FromBase64String($PFX_BASE64)
+        $bytes = [Convert]::FromBase64String($Env:PFX_BASE64)
         [IO.File]::WriteAllBytes($codesign_pfx, $bytes)
 
         Get-ChildItem ".\nuget\*.nupkg" -Recurse | ForEach-Object {
-          dotnet nuget sign $_.FullName --certificate-path $codesign_pfx --certificate-password $PFX_PASS --timestamper $TIMESTAMPER_URL
+          dotnet nuget sign $_.FullName --certificate-path $codesign_pfx --certificate-password $Env:PFX_PASS --timestamper $Env:TIMESTAMPER_URL
         }
         
     - name: Configure Azure Artifacts feed
       if: github.repository_owner == 'GeneXusLabs' && steps.buildVariables.outputs.SHOULD_DEPLOY == 'true'
       run: |
-        $IsPrerelease = [System.Convert]::ToBoolean($IsPrerelease)
+        $IsPrerelease = [System.Convert]::ToBoolean($Env:IsPrerelease)
 
     - name: Push packages
       if: github.repository_owner == 'GeneXusLabs' && steps.buildVariables.outputs.SHOULD_DEPLOY == 'true'
@@ -69,13 +69,13 @@ jobs:
         GPRFeedURL: https://nuget.pkg.github.com/genexuslabs/index.json
         NuGetFeedURL: https://api.nuget.org/v3/index.json
       run: |
-        $IsPrerelease = [System.Convert]::ToBoolean($IsPrerelease)
+        $IsPrerelease = [System.Convert]::ToBoolean($Env:IsPrerelease)
 
         $totalPackages  = 0
         $pushedToNuget  = 0
 
         Get-ChildItem ".\dotnet\*.nupkg" -Recurse | ForEach-Object {
-          $PushToNugetArgs  = @("nuget", "push", $_.FullName, "--source", $NuGetFeedURL, "--api-key", "${{ secrets.NUGET_ORG_TOKEN }}")
+          $PushToNugetArgs  = @("nuget", "push", $_.FullName, "--source", $Env:NuGetFeedURL, "--api-key", "${{ secrets.NUGET_ORG_TOKEN }}")
 
           if ([string]::IsNullOrEmpty("${{ github.event.inputs.skip-duplicates }}") ) {
             $skipDuplicates = $true
