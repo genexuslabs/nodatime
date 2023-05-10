@@ -35,11 +35,11 @@ namespace NodaTime
     /// but only in very rare historical cases (or fictional ones).</para>
     /// </remarks>
     /// <threadsafety>This type is an immutable value type. See the thread safety section of the user guide for more information.</threadsafety>
-#if !NETSTANDARD
+#if BINARY_SERIALIZATION
     [Serializable]
 #endif
     public struct Offset : IEquatable<Offset>, IComparable<Offset>, IFormattable, IComparable, IXmlSerializable
-#if !NETSTANDARD
+#if BINARY_SERIALIZATION
         , ISerializable
 #endif
     {
@@ -517,7 +517,7 @@ namespace NodaTime
         }
         #endregion
 
-#if !NETSTANDARD
+#if BINARY_SERIALIZATION
         #region Binary serialization
         /// <summary>
         /// Private constructor only present for serialization.
