@@ -72,7 +72,7 @@ jobs:
         $totalPackages  = 0
         $pushedToNuget  = 0
 
-        Get-ChildItem ".\dotnet\*.nupkg" -Recurse | ForEach-Object {
+        Get-ChildItem ".\nuget\*.nupkg" -Recurse | ForEach-Object {
           $PushToNugetArgs  = @("nuget", "push", $_.FullName, "--source", $Env:NuGetFeedURL, "--api-key", "${{ secrets.NUGET_ORG_TOKEN }}")
 
             $skipDuplicates = $true
