@@ -1,0 +1,77 @@
+name: Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "2.4.x" ]
+  pull_request:
+    branches: [ "2.4.x" ]
+
+jobs:
+  build:
+    env:
+      GIT_REF: ${{ github.ref }}
+      GIT_SHA: ${{ github.sha }}
+      Configuration: Release
+      SolutionFile: .\src\NodaTime-Web.sln
+
+    runs-on: windows-latest
+
+    steps:
+    - name: Check out our repo
+      uses: actions/checkout@v3
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 2.1.818
+        
+    - name: Restore dependencies
+      run: dotnet restore $Env:SolutionFile
+    
+    - name: Build
+      run: dotnet build --no-restore  $Env:SolutionFile -c $Env:Configuration
+    
+    - name: Test
+      run: dotnet test --no-build --verbosity normal $Env:SolutionFile -c $Env:Configuration
+    
+    - name: Pack
+      run: dotnet pack $Env:SolutionFile --no-restore --no-build --configuration $Env:Configuration  -o ./nuget
+
+    - name: Sign packages
+      if: github.repository_owner == 'GeneXusLabs' && !(github.event_name == 'pull_request')
+      env:
+        TIMESTAMPER_URL: ${{ secrets.CODE_SIGN_CERTIFICATE_TIMESTAMPER_URL }}
+        PFX_BASE64: ${{ secrets.CODE_SIGN_CERTIFICATE_BASE64 }}
+        PFX_PASS: ${{ secrets.CODE_SIGN_CERTIFICATE_PASSWORD }}
+      run: |
+        $codesign_pfx = "code_sign_cert.pfx"
+        $bytes = [Convert]::FromBase64String($Env:PFX_BASE64)
+        [IO.File]::WriteAllBytes($codesign_pfx, $bytes)
+
+        Get-ChildItem ".\nuget\*.nupkg" -Recurse | ForEach-Object {
+          dotnet nuget sign $_.FullName --certificate-path $codesign_pfx --certificate-password $Env:PFX_PASS --timestamper $Env:TIMESTAMPER_URL
+        }
+        
+    - name: Push packages
+      if: github.repository_owner == 'GeneXusLabs' && !(github.event_name == 'pull_request')
+      env:
+        NuGetFeedURL: https://api.nuget.org/v3/index.json
+      run: |
+        $IsPrerelease = [System.Convert]::ToBoolean($Env:IsPrerelease)
+
+        $totalPackages  = 0
+        $pushedToNuget  = 0
+
+        Get-ChildItem ".\nuget\*.nupkg" -Recurse | ForEach-Object {
+          $PushToNugetArgs  = @("nuget", "push", $_.FullName, "--source", $Env:NuGetFeedURL, "--api-key", "${{ secrets.NUGET_ORG_TOKEN }}")
+          $PushToNugetArgs  += "--skip-duplicate"
+
+          dotnet $PushToNugetArgs
+          
+          $pushedToNuget += 1
+          $totalPackages += 1
+        }
+
+        Write-Output "Number of packages found: $totalPackages"
+        Write-Output "Number of packages pushed to Nuget.org: $pushedToNuget"
