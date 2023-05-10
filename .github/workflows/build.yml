@@ -44,6 +44,7 @@ jobs:
         TIMESTAMPER_URL: ${{ secrets.CODE_SIGN_CERTIFICATE_TIMESTAMPER_URL }}
         PFX_BASE64: ${{ secrets.CODE_SIGN_CERTIFICATE_BASE64 }}
         PFX_PASS: ${{ secrets.CODE_SIGN_CERTIFICATE_PASSWORD }}
+      working-directory: src\NodaTime
       run: |
         $codesign_pfx = "code_sign_cert.pfx"
         $bytes = [Convert]::FromBase64String($Env:PFX_BASE64)
@@ -57,9 +58,8 @@ jobs:
       if: github.repository_owner == 'GeneXusLabs' && !(github.event_name == 'pull_request')
       env:
         NuGetFeedURL: https://api.nuget.org/v3/index.json
+      working-directory: src\NodaTime
       run: |
-        $IsPrerelease = [System.Convert]::ToBoolean($Env:IsPrerelease)
-
         $totalPackages  = 0
         $pushedToNuget  = 0
 
