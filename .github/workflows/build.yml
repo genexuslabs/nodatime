@@ -1,9 +1,7 @@
-# This workflow will build a .NET project
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
-
 name: Build
 
 on:
+  workflow_dispatch:
   push:
     branches: [ "2.4.x" ]
   pull_request:
@@ -28,7 +26,6 @@ jobs:
       with:
         dotnet-version: '6.0.x'
         include-prerelease: false
-        
         
     - name: Restore dependencies
       run: dotnet restore $Env:SolutionFile
@@ -57,11 +54,6 @@ jobs:
           dotnet nuget sign $_.FullName --certificate-path $codesign_pfx --certificate-password $Env:PFX_PASS --timestamper $Env:TIMESTAMPER_URL
         }
         
-    - name: Configure Azure Artifacts feed
-      if: github.repository_owner == 'GeneXusLabs' && !(github.event_name == 'pull_request')
-      run: |
-        $IsPrerelease = [System.Convert]::ToBoolean($Env:IsPrerelease)
-
     - name: Push packages
       if: github.repository_owner == 'GeneXusLabs' && !(github.event_name == 'pull_request')
       env:
@@ -74,22 +66,13 @@ jobs:
 
         Get-ChildItem ".\nuget\*.nupkg" -Recurse | ForEach-Object {
           $PushToNugetArgs  = @("nuget", "push", $_.FullName, "--source", $Env:NuGetFeedURL, "--api-key", "${{ secrets.NUGET_ORG_TOKEN }}")
+          $PushToNugetArgs  += "--skip-duplicate"
 
-            $skipDuplicates = $true
+          dotnet $PushToNugetArgs
           
-          if ($skipDuplicates) {
-            $PushToNugetArgs  += "--skip-duplicate"
-          }
-          
-          if (!$IsPrerelease) {
-            dotnet $PushToNugetArgs
-            $pushedToNuget += 1
-          }
-
+          $pushedToNuget += 1
           $totalPackages += 1
         }
 
         Write-Output "Number of packages found: $totalPackages"
-
         Write-Output "Number of packages pushed to Nuget.org: $pushedToNuget"
-
