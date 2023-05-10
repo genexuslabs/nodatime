@@ -54,7 +54,7 @@ jobs:
         [IO.File]::WriteAllBytes($codesign_pfx, $bytes)
 
         Get-ChildItem ".\*.nupkg" -Recurse | ForEach-Object {
-          nuget sign $_.FullName --certificate-path $codesign_pfx --certificate-password $Env:PFX_PASS --timestamper $Env:TIMESTAMPER_URL
+          nuget sign $_.FullName -CertificatePath $codesign_pfx -CertificatePassword $Env:PFX_PASS -Timestamper $Env:TIMESTAMPER_URL
         }
         
     - name: Push packages
@@ -67,8 +67,8 @@ jobs:
         $pushedToNuget  = 0
 
         Get-ChildItem ".\*.nupkg" -Recurse | ForEach-Object {
-          $PushToNugetArgs  = @("push", $_.FullName, "--source", $Env:NuGetFeedURL, "--api-key", "${{ secrets.NUGET_ORG_TOKEN }}")
-          $PushToNugetArgs  += "--skip-duplicate"
+          $PushToNugetArgs  = @("push", $_.FullName, "-Source", $Env:NuGetFeedURL, "-ApiKey", "${{ secrets.NUGET_ORG_TOKEN }}")
+          $PushToNugetArgs  += "-SkipDuplicate"
 
           nuget $PushToNugetArgs
           
