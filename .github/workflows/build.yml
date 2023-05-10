@@ -21,11 +21,13 @@ jobs:
     - name: Check out our repo
       uses: actions/checkout@v3
 
-    - name: Install .NET 6
-      uses: actions/setup-dotnet@v2
+    - name: Setup Nuget.exe
+      uses: nuget/setup-nuget@v1
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: '6.0.x'
-        include-prerelease: false
+        dotnet-version: 2.1.818
         
     - name: Restore dependencies
       run: dotnet restore $Env:SolutionFile
@@ -52,7 +54,7 @@ jobs:
         [IO.File]::WriteAllBytes($codesign_pfx, $bytes)
 
         Get-ChildItem ".\*.nupkg" -Recurse | ForEach-Object {
-          dotnet nuget sign $_.FullName --certificate-path $codesign_pfx --certificate-password $Env:PFX_PASS --timestamper $Env:TIMESTAMPER_URL
+          nuget sign $_.FullName --certificate-path $codesign_pfx --certificate-password $Env:PFX_PASS --timestamper $Env:TIMESTAMPER_URL
         }
         
     - name: Push packages
@@ -65,10 +67,10 @@ jobs:
         $pushedToNuget  = 0
 
         Get-ChildItem ".\*.nupkg" -Recurse | ForEach-Object {
-          $PushToNugetArgs  = @("nuget", "push", $_.FullName, "--source", $Env:NuGetFeedURL, "--api-key", "${{ secrets.NUGET_ORG_TOKEN }}")
+          $PushToNugetArgs  = @("push", $_.FullName, "--source", $Env:NuGetFeedURL, "--api-key", "${{ secrets.NUGET_ORG_TOKEN }}")
           $PushToNugetArgs  += "--skip-duplicate"
 
-          dotnet $PushToNugetArgs
+          nuget $PushToNugetArgs
           
           $pushedToNuget += 1
           $totalPackages += 1
