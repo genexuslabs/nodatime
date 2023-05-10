@@ -76,11 +76,7 @@ jobs:
         Get-ChildItem ".\dotnet\*.nupkg" -Recurse | ForEach-Object {
           $PushToNugetArgs  = @("nuget", "push", $_.FullName, "--source", $Env:NuGetFeedURL, "--api-key", "${{ secrets.NUGET_ORG_TOKEN }}")
 
-          if ([string]::IsNullOrEmpty("${{ github.event.inputs.skip-duplicates }}") ) {
             $skipDuplicates = $true
-          } else {
-            $skipDuplicates = [System.Convert]::ToBoolean("${{ github.event.inputs.skip-duplicates }}")
-          }
           
           if ($skipDuplicates) {
             $PushToNugetArgs  += "--skip-duplicate"
