@@ -43,7 +43,7 @@ jobs:
       run: dotnet pack $Env:SolutionFile --no-restore --no-build --configuration $Env:Configuration  -o ./nuget
 
     - name: Sign packages
-      if: github.repository_owner == 'GeneXusLabs' && steps.buildVariables.outputs.SHOULD_DEPLOY == 'true'
+      if: github.repository_owner == 'GeneXusLabs' && github.event_name == 'pull_request'
       env:
         TIMESTAMPER_URL: ${{ secrets.CODE_SIGN_CERTIFICATE_TIMESTAMPER_URL }}
         PFX_BASE64: ${{ secrets.CODE_SIGN_CERTIFICATE_BASE64 }}
