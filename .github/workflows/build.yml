@@ -65,7 +65,6 @@ jobs:
     - name: Push packages
       if: github.repository_owner == 'GeneXusLabs' && steps.buildVariables.outputs.SHOULD_DEPLOY == 'true'
       env:
-        GPRFeedURL: https://nuget.pkg.github.com/genexuslabs/index.json
         NuGetFeedURL: https://api.nuget.org/v3/index.json
       run: |
         $IsPrerelease = [System.Convert]::ToBoolean($Env:IsPrerelease)
