@@ -26,11 +26,11 @@ namespace NodaTime
     /// to a particular calendar, time zone or date.
     /// </summary>
     /// <threadsafety>This type is an immutable value type. See the thread safety section of the user guide for more information.</threadsafety>
-#if !NETSTANDARD
+#if BINARY_SERIALIZATION
     [Serializable]
 #endif
     public struct LocalTime : IEquatable<LocalTime>, IComparable<LocalTime>, IFormattable, IComparable, IXmlSerializable
-#if !NETSTANDARD
+#if BINARY_SERIALIZATION
         , ISerializable
 #endif
     {
@@ -783,7 +783,7 @@ namespace NodaTime
         }
         #endregion
 
-#if !NETSTANDARD
+#if BINARY_SERIALIZATION
         #region Binary serialization
         /// <summary>
         /// Private constructor only present for serialization.
