@@ -12,6 +12,7 @@
     <PackageTags>date;time;timezone;calendar;nodatime</PackageTags>
     <PackageProjectUrl>http://nodatime.org/</PackageProjectUrl>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+	<PackageId>GeneXus.NodaTime</PackageId>
     <RepositoryUrl>https://github.com/nodatime/nodatime</RepositoryUrl>
     <GenerateNeutralResourcesLanguageAttribute>false</GenerateNeutralResourcesLanguageAttribute>
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
